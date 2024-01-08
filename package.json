@@ -5,6 +5,7 @@
     "http": "^0.0.1-security",
     "kafka-node": "^5.0.0",
     "node": "^21.2.0",
+    "socket.io": "^4.7.3",
     "three": "^0.159.0",
     "url": "^0.11.3"
   },
@@ -23,5 +24,4 @@
   "keywords": [],
   "author": "",
   "license": "ISC"
-
 }

@@ -1,16 +1,16 @@
-import {BaseModule} from "./BaseClasses";
+import {BaseModule} from "./common_modules/BaseClasses";
 import {DisplayManager} from "./DisplayManager";
+import {EventDispatcher} from "three";
 
 
-export class Feature{
+export abstract class Feature extends EventDispatcher{
     readonly id: string;
-    private connectFunction?: Function;
-    modules: ModuleData<any>[];
+    modules: ModuleData[];
 
 
-    constructor(id: string, modules: ModuleData<any>[], connectFunction?: Function) {
+    protected constructor(id: string, modules: ModuleData[]) {
+        super();
         this.id = id;
-        this.connectFunction = connectFunction;
         this.modules = modules;
     }
 
@@ -18,14 +18,16 @@ export class Feature{
         for (const module of this.modules) {
             module.init(display, this.id);
         }
-        if(this.connectFunction !== undefined) this.connectFunction();
+        this.connectFunction();
     }
+
+    protected abstract connectFunction(): void;
 }
 
-export class ModuleData<T>{
+export class ModuleData{
     private module: new (...Params: any[]) => BaseModule;
     private params?: any[];
-    private instance: BaseModule;
+    public instance: BaseModule;
 
 
     constructor(module: new (...Params: any[]) => BaseModule, params?: any[]) {

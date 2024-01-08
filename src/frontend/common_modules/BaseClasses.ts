@@ -1,7 +1,7 @@
 import * as T from 'three';
-import {DisplayManager} from "./DisplayManager";
+import {DisplayManager} from "../DisplayManager";
 import {Vector3} from "three";
-import {Feature} from "./Feature";
+import {Feature} from "../Feature";
 
 /**
  * @class BaseModule

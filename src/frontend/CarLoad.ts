@@ -1,4 +1,4 @@
-import {Environment} from "./Environment";
+import {Environment} from "./common_modules/Environment";
 import {DisplayManager} from "./DisplayManager";
 import * as T from "three";
 

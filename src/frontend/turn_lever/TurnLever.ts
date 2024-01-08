@@ -1,7 +1,8 @@
-import {Environment} from "../Environment";
+import {Environment} from "../common_modules/Environment";
 import {DisplayManager} from "../DisplayManager";
 import * as T from "three";
 import {Feature, ModuleData} from "../Feature";
+import {KafkaProducerModule} from "../common_modules/KafkaProducerModule";
 
 
 enum LeverState{
@@ -18,7 +19,7 @@ export class TurnLever extends Environment{
         super("TurnLever");
 
         this.meshList = [{
-            path: "./src/turn_lever/turn_lever_004.obj",
+            path: "./src/frontend/turn_lever/turn_lever_004.obj",
             pos: new T.Vector3(-0.5, -0.675, -0.6),
             rot: new T.Vector3(0, -Math.PI * 0.5, Math.PI * 0.6),
             events: [
@@ -50,7 +51,9 @@ export class TurnLever extends Environment{
 
     onLeverLeftClick(){
         if(this.leverState == LeverState.Left) return;
+        let oldState = this.leverState;
         this.leverState -= 1;
+        this.dispatchEvent({type: TurnLever.EVENT_LEVER_STATE_CHANGED, oldState: oldState, newState: this.leverState});
     }
 
 
@@ -61,7 +64,42 @@ export class TurnLever extends Environment{
     }
 }
 
-export function getTurnIndicatorFeature(): Feature{
-    return new Feature("TurnIndicatorFeature",
-        [new ModuleData<any>(TurnLever)])
+export class TurnLeverEvent extends Event{
+    newState: LeverState
+    oldState: LeverState
+}
+
+export class TurnIndicationFeature extends Feature {
+    turnLever: TurnLever;
+    kafkaProducer: KafkaProducerModule;
+    public constructor(){
+        super("TurnIndicationFeature", [
+            new ModuleData(TurnLever),
+            new ModuleData(KafkaProducerModule, ["localhost:5000"])
+        ])
+    }
+    protected connectFunction(): void {
+        this.turnLever = this.modules[0].instance as TurnLever;
+        this.kafkaProducer = this.modules[1].instance as KafkaProducerModule;
+
+        this.turnLever.addEventListener(TurnLever.EVENT_LEVER_STATE_CHANGED, (event: TurnLeverEvent) => {
+            let kafkaMessage = {
+                type: "turn_lever_event",
+                data: {
+                    old_state: event.oldState,
+                    new_state: event.newState
+                }
+            }
+            this.kafkaProducer.produce('UI_messages', JSON.stringify(kafkaMessage),
+                (msg: Response) => {
+                    console.log(msg)
+                    if(!msg.ok){
+                        this.turnLever.leverState = event.oldState;
+                    }
+                },
+                (error) => {
+                console.error(error)
+                })
+        })
+    }
 }

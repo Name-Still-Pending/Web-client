@@ -4,13 +4,20 @@ import quart_redis as qr
 import aiokafka
 import asyncio
 from threading import Event
+import json
+from quart_cors import cors, websocket_cors, route_cors
 
 frame_received_event = asyncio.Event()
 app = quart.Quart(__name__)
+app = cors(app, allow_origin="http://*")
 
 
-@app.route("/kafka/produce/<topic>/<message>")
+@app.route("/kafka/produce/<topic>")
 async def produce(topic: str, message: str):
+    message = request.args.get("message")
+    if message is None:
+        return "Failed to produce: No message"
+
     producer = aiokafka.AIOKafkaProducer(bootstrap_servers='localhost:9092')
     await producer.start()
     try:
@@ -31,7 +38,8 @@ async def consume():
     try:
         await consumer.start()
         async for message in consumer:
-            await websocket.send(message.value)
+            await message
+            await websocket.send(bytes(json.dump(message), 'utf-8'))
             pass
     except asyncio.CancelledError:
         await consumer.stop()
@@ -41,6 +49,9 @@ async def consume():
 
     await websocket.close(400)
 
+@app.websocket("/redis/frames")
+async def frames():
+    pass
 
 def main():
     app.run(debug=True)
