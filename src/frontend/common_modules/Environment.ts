@@ -1,5 +1,5 @@
 import {BaseModule, EventListenerBinding, MeshLoadData} from "./BaseClasses";
-import {DisplayManager} from "./DisplayManager";
+import {DisplayManager} from "../DisplayManager";
 import * as T from 'three';
 import {MTLLoader} from "three/examples/jsm/loaders/MTLLoader";
 import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader";

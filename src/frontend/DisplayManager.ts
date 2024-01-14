@@ -1,5 +1,5 @@
 import * as T from 'three'
-import {BaseModule, EventListenerBinding} from "./BaseClasses";
+import {BaseModule, EventListenerBinding} from "./common_modules/BaseClasses";
 // @ts-ignore
 import {MTLLoader} from "three/examples/jsm/loaders/MTLLoader";
 // @ts-ignore
