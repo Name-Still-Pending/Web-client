@@ -31,7 +31,8 @@ export class CanvasModule extends ScreenModule{
         this.setTexture(tex);
     }
     public clear(){
-        this.context.clearRect(0, 0, this.size.width, this.size.height);
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // this.context.stroke();
     }
 
     public rect(x: number, y: number, w: number, h: number, c: string, t: number){
@@ -42,7 +43,7 @@ export class CanvasModule extends ScreenModule{
         this.context.stroke();
     }
 
-    public rectRel(x: number, y: number, w: number, h: number, c: string, t: number){
+    public rectNormalized(x: number, y: number, w: number, h: number, c: string, t: number){
         this.rect(x * this.canvas.width, y * this.canvas.height, w * this.canvas.width, h * this.canvas.height, c, t);
     }
 }

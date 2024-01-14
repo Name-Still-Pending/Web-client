@@ -5,10 +5,10 @@ import {EventDispatcher} from "three";
 
 export abstract class Feature extends EventDispatcher{
     readonly id: string;
-    modules: ModuleData[];
+    modules: ModuleData<BaseModule>[];
 
 
-    protected constructor(id: string, modules: ModuleData[]) {
+    protected constructor(id: string, modules: ModuleData<BaseModule>[]) {
         super();
         this.id = id;
         this.modules = modules;
@@ -24,23 +24,26 @@ export abstract class Feature extends EventDispatcher{
     protected abstract connectFunction(): void;
 }
 
-export class ModuleData{
-    private module: new (...Params: any[]) => BaseModule;
-    private params?: any[];
-    public instance: BaseModule;
+export class ModuleData<T extends BaseModule>{
+    get instance(): T {
+        return this._instance;
+    }
+    private readonly module: new (...Params: any[]) => T;
+    private readonly params?: any[];
+    private _instance: T;
 
 
-    constructor(module: new (...Params: any[]) => BaseModule, params?: any[]) {
+    constructor(module: new (...Params: any[]) => T, params?: any[]) {
         this.module = module;
         this.params = params;
     }
 
     init(display: DisplayManager, featureId: string){
-        this.instance = this.params === undefined ? new this.module() : new this.module(...this.params);
-        if(display.modules[this.instance.id] != undefined) {
-            this.instance = display.modules[this.instance.id];
+        this._instance = this.params === undefined ? new this.module() : new this.module(...this.params);
+        if(display.modules[this._instance.id] != undefined) {
+            this._instance = display.modules[this._instance.id];
         }
-        else display.addModule(this.instance, true);
-        this.instance.users.push(featureId);
+        else display.addModule(this._instance, true);
+        this._instance.users.push(featureId);
     }
 }

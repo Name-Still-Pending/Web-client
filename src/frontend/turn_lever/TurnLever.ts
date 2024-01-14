@@ -3,7 +3,7 @@ import {DisplayManager} from "../DisplayManager";
 import * as T from "three";
 
 
-enum LeverState{
+export enum LeverState{
     Neutral = 0,
     Right = 1,
     Left = -1
