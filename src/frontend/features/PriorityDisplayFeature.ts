@@ -2,9 +2,9 @@ import {Feature, ModuleData} from "../Feature";
 import {KafkaProducerModule} from "../common_modules/KafkaProducerModule";
 import {KafkaConsumerModule, KafkaMessageEvent} from "../common_modules/KafkaConsumerModule";
 import {RedisEvent, RedisReceiverModule} from "../common_modules/RedisReceiverModule";
-import {CanvasModule} from "../common_modules/CanvasModule";
 import * as T from "three";
 import {LeverState, TurnLever, TurnLeverEvent} from "../turn_lever/TurnLever";
+import {ScreenModule} from "../common_modules/ScreenModule";
 
 export class PriorityDisplayFeature extends Feature {
 
@@ -13,7 +13,7 @@ export class PriorityDisplayFeature extends Feature {
     kafkaProducer: KafkaProducerModule;
     kafkaConsumer: KafkaConsumerModule;
     redisReceiver: RedisReceiverModule;
-    displayCanvas: CanvasModule;
+    displayCanvas: ScreenModule;
 
     //private properties
     private turnType: TurnMode;
@@ -24,18 +24,21 @@ export class PriorityDisplayFeature extends Feature {
             new ModuleData(TurnLever),
             new ModuleData(KafkaProducerModule, [proxyHost]),
             new ModuleData(RedisReceiverModule, [proxyHost]),
-            new ModuleData(CanvasModule, ["MarkingCanvas", new T.Vector2(16, 9), new T.Vector3(0, 3, -8), new T.Vector3(0, 0, 0), 100]),
+            new ModuleData(ScreenModule, ["MarkingCanvas", new T.Vector2(16, 9),
+                new T.Vector3(0, 3, -8), new T.Vector3(0, 0, 0),
+                document.createElement("canvas"), 100]),
             new ModuleData(KafkaConsumerModule, [proxyHost, ["frame_detection"]])
         ])
 
         this.turnType = TurnMode.YIELD;
+        this.turnDir = TurnWarning.STRAIGHT;
     }
 
     protected connectFunction(): void {
         this.turnLever      = this.modules[0].instance as TurnLever;
         this.kafkaProducer  = this.modules[1].instance as KafkaProducerModule;
         this.redisReceiver  = this.modules[2].instance as RedisReceiverModule;
-        this.displayCanvas  = this.modules[3].instance as CanvasModule;
+        this.displayCanvas  = this.modules[3].instance as ScreenModule;
         this.kafkaConsumer  = this.modules[4].instance as KafkaConsumerModule;
 
         this.turnLever.addEventListener(TurnLever.EVENT_LEVER_STATE_CHANGED, (event: TurnLeverEvent) => {
@@ -79,7 +82,7 @@ export class PriorityDisplayFeature extends Feature {
         let classes = val['classes'];
         if (classes == undefined) return;
 
-        this.displayCanvas.clear();
+        this.displayCanvas.clearStrokes();
         for (const maskKey in mask) {
             if((mask[maskKey] & this.turnDir) == 0) continue;
 
@@ -87,10 +90,10 @@ export class PriorityDisplayFeature extends Feature {
             if(marks == undefined) continue;
 
             for (const mark of marks) {
-                this.displayCanvas.rectNormalized(mark[0], mark[1], mark[2], mark[3], "red", 10)
+                this.displayCanvas.rectNorm(mark[0], mark[1], mark[2], mark[3], "red", 10)
             }
         }
-        this.displayCanvas.update();
+        this.displayCanvas.updateStrokes();
     }
 }
 
@@ -100,7 +103,6 @@ enum TurnWarning {
     RIGHT = 2,
     STRAIGHT = 4,
     LEFT_STRAIGHT = LEFT | STRAIGHT,
-    RIGHT_STRAIGHT = RIGHT | STRAIGHT,
     ALL = LEFT | STRAIGHT | RIGHT,
 }
 
@@ -114,7 +116,6 @@ enum TurnMode {
     YIELD_RIGHT_STRAIGHT
 }
 
-const VEHICLE_IGN = 'vehicle_ign'
 const VEHICLE_L = 'vehicle_l'
 const VEHICLE_R = 'vehicle_r'
 const VEHICLE_S = 'vehicle_s'
