@@ -40,7 +40,7 @@ export class ModuleData{
         if(display.modules[this.instance.id] != undefined) {
             this.instance = display.modules[this.instance.id];
         }
-        else display.addModule(this.instance);
+        else display.addModule(this.instance, true);
         this.instance.users.push(featureId);
     }
 }

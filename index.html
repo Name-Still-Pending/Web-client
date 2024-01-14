@@ -118,12 +118,13 @@
         import * as T from 'three';
         import {DisplayManager} from "./src/frontend/DisplayManager";
         import {CarLoad} from "./src/frontend/CarLoad";
-        import {TurnIndicationFeature} from "./src/frontend/turn_lever/TurnLever";
+
+        import {PriorityDisplayFeature} from "./src/frontend/features/PriorityDisplayFeature.js";
 
         let display = new DisplayManager('OpenGlDisplay');
 
         display.addModule(new CarLoad());
-        display.addFeature(new TurnIndicationFeature());
+        display.addFeature(new PriorityDisplayFeature());
 
         // test code, should be implemented with Environment class
 

@@ -1,8 +1,6 @@
 import {Environment} from "../common_modules/Environment";
 import {DisplayManager} from "../DisplayManager";
 import * as T from "three";
-import {Feature, ModuleData} from "../Feature";
-import {KafkaProducerModule} from "../common_modules/KafkaProducerModule";
 
 
 enum LeverState{
@@ -45,8 +43,9 @@ export class TurnLever extends Environment{
 
     onLeverRightClick(){
         if(this._leverState == LeverState.Right) return;
+        let oldState = this.leverState;
         this.leverState += 1;
-        this.dispatchEvent({type: TurnLever.EVENT_LEVER_STATE_CHANGED, message: this.leverState});
+        this.dispatchEvent({type: TurnLever.EVENT_LEVER_STATE_CHANGED, oldState: oldState, newState: this.leverState});
     }
 
     onLeverLeftClick(){
@@ -69,37 +68,3 @@ export class TurnLeverEvent extends Event{
     oldState: LeverState
 }
 
-export class TurnIndicationFeature extends Feature {
-    turnLever: TurnLever;
-    kafkaProducer: KafkaProducerModule;
-    public constructor(){
-        super("TurnIndicationFeature", [
-            new ModuleData(TurnLever),
-            new ModuleData(KafkaProducerModule, ["localhost:5000"])
-        ])
-    }
-    protected connectFunction(): void {
-        this.turnLever = this.modules[0].instance as TurnLever;
-        this.kafkaProducer = this.modules[1].instance as KafkaProducerModule;
-
-        this.turnLever.addEventListener(TurnLever.EVENT_LEVER_STATE_CHANGED, (event: TurnLeverEvent) => {
-            let kafkaMessage = {
-                type: "turn_lever_event",
-                data: {
-                    old_state: event.oldState,
-                    new_state: event.newState
-                }
-            }
-            this.kafkaProducer.produce('UI_messages', JSON.stringify(kafkaMessage),
-                (msg: Response) => {
-                    console.log(msg)
-                    if(!msg.ok){
-                        this.turnLever.leverState = event.oldState;
-                    }
-                },
-                (error) => {
-                console.error(error)
-                })
-        })
-    }
-}
