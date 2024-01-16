@@ -7,69 +7,70 @@ export class ScreenModule extends BaseModule {
     pos: T.Vector3;
     rot: T.Vector3;
     object: T.Mesh;
-    canvas: HTMLCanvasElement
-    context: CanvasRenderingContext2D;
+    layerCount: number;
+    canvases: HTMLCanvasElement[]
+    contexts: CanvasRenderingContext2D[];
     pixelScale: number;
-
-    //optional drawing functions
-    updateStrokes: () => void;
-    clearStrokes: () => void;
-    rect: (x: number, y: number, w: number, h: number, c: string, t: number) => void;
-    rectNorm: (x: number, y: number, w: number, h: number, c: string, t: number) => void;
 
     constructor(name: string,
                 size: T.Vector2,
                 pos: T.Vector3,
                 rot: T.Vector3,
-                canvas?: HTMLCanvasElement,
+                layers: number,
                 pixelScale = 100) {
         super(name)
         this.pos = pos;
         this.rot = rot;
         this.size = size;
 
-        if (canvas != undefined) {
-            this.canvas = canvas;
-            this.canvas.width = this.size.width * pixelScale;
-            this.canvas.height = this.size.height * pixelScale;
-            this.context = this.canvas.getContext("2d");
-            this.updateStrokes = this._updateStrokes;
-            this.clearStrokes = this._clearStrokes;
-            this.rect = this._rect;
-            this.rectNorm = this._rectNorm;
-        }
-
+        this.canvases = new Array<HTMLCanvasElement>()
+        this.contexts = new Array<CanvasRenderingContext2D>()
+        this.layerCount = layers;
         this.pixelScale = pixelScale;
     }
 
-    public setImageFromBlob(data: ArrayBuffer, width: number, height: number, format: T.PixelFormat = T.RGBAFormat){
-        let tex = new T.DataTexture(data, width, height, format);
-        tex.needsUpdate = true;
-        this.setTexture(tex, 0);
+    public resize(newWidth: number, newHeight: number){
+        let geo = this.object.geometry as T.PlaneGeometry
+        let scale = new T.Vector2(newWidth / this.size.width, newHeight / this.size.height);
+        geo.scale(scale.x, scale.y, 1)
+
+        for (let canvas of this.canvases) {
+            canvas.width = newWidth * this.pixelScale;
+            canvas.height = newHeight * this.pixelScale;
+        }
+
     }
 
-    private setTexture(texture: T.Texture, layer: number) {
-        let oldTex = (this.object.material as T.MeshBasicMaterial[])[layer].map;
-        (this.object.material as T.MeshBasicMaterial[])[layer].map = texture;
-        if (oldTex != null) oldTex.dispose()
+    public async setImageFromBlob(layer: number, data: Blob, width: number, height: number) {
+        let con = this.contexts[layer];
+        data.arrayBuffer().then((buffer) => {
+            let imdata = new ImageData(new Uint8ClampedArray(buffer), width, height, {colorSpace: "srgb"});
+            let canvas = this.canvases[layer];
+            canvas.width = width;
+            canvas.height = height;
+            con.putImageData(imdata, 0, 0)
+            this.object.material[layer].map.needsUpdate = true;
+            this.object.material[layer].needsUpdate = true;
+        })
     }
 
     public init(display: DisplayManager) {
         let geometry = new T.PlaneGeometry(this.size.width, this.size.height);
         geometry.clearGroups();
-        geometry.addGroup(0, Infinity, 0);
-        let baseLayer = new T.MeshBasicMaterial({color: 0xffffff});
-        baseLayer.transparent = false;
-        let materials = [baseLayer];
+        let materials = new Array<T.MeshBasicMaterial>();
 
-        geometry.addGroup(0, Infinity, 1);
-        if(this.canvas != undefined){
-            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            let drawingLayer = new T.MeshBasicMaterial({color: 0x0});
-            drawingLayer.transparent = true;
-            drawingLayer.map = new T.CanvasTexture(this.canvas, T.UVMapping);
-            materials.push(drawingLayer);
-            geometry.addGroup(0, Infinity, 1);
+        for (let i = 0; i < this.layerCount; ++i) {
+            let canvas = document.createElement("canvas");
+            canvas.width = this.size.width * this.pixelScale;
+            canvas.height = this.size.height * this.pixelScale;
+            this.canvases.push(canvas);
+            this.contexts.push(this.canvases[i].getContext("2d"))
+            this.contexts[i].clearRect(0, 0, canvas.width, canvas.height);
+
+            let tex = new T.CanvasTexture(canvas, T.UVMapping);
+            let mat = new T.MeshBasicMaterial({map: tex, transparent: true})
+            materials.push(mat);
+            geometry.addGroup(0, Infinity, i);
         }
 
         this.object = new T.Mesh(geometry, materials);
@@ -83,27 +84,32 @@ export class ScreenModule extends BaseModule {
         super.init(display);
     }
 
-    private _updateStrokes() {
-        let tex = new T.CanvasTexture(this.canvas, T.UVMapping);
-        tex.needsUpdate = true;
-        this.setTexture(tex, 1);
+    public updateStrokes(layer: number) {
+        this.object.material[layer].map.needsUpdate = true;
     }
 
-    private _clearStrokes() {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        // this.context.stroke();
+    public clearStrokes(layer: number) {
+        this.contexts[layer].beginPath();
+        this.contexts[layer].clearRect(0, 0, this.canvases[layer].width, this.canvases[layer].height);
+        // this.contexts[layer].stroke();
     }
 
-    private _rect(x: number, y: number, w: number, h: number, c: string, t: number) {
-        this.context.strokeStyle = c;
-        this.context.lineWidth = t;
+    public rect(layer: number, x: number, y: number, w: number, h: number, c: string, t: number) {
+        let con = this.contexts[layer];
+        con.strokeStyle = c;
+        con.lineWidth = t;
 
-        this.context.rect(x, y, w, h);
-        this.context.stroke();
+        con.rect(x, y, w, h);
+        con.stroke();
     }
 
-    private _rectNorm(x: number, y: number, w: number, h: number, c: string, t: number) {
-        this._rect(x * this.canvas.width, y * this.canvas.height, w * this.canvas.width, h * this.canvas.height, c, t);
+    public rectNorm(layer: number, x: number, y: number, w: number, h: number, c: string, t: number) {
+        this.rect(
+            layer,
+            x * this.canvases[layer].width,
+            y * this.canvases[layer].height,
+            w * this.canvases[layer].width,
+            h * this.canvases[layer].height, c, t);
     }
 
     public enable(): void {
@@ -113,5 +119,4 @@ export class ScreenModule extends BaseModule {
     public disable(): void {
         throw new Error('Method not implemented.');
     }
-
 }

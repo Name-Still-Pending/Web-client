@@ -25,8 +25,8 @@ export class PriorityDisplayFeature extends Feature {
             new ModuleData(KafkaProducerModule, [proxyHost]),
             new ModuleData(RedisReceiverModule, [proxyHost]),
             new ModuleData(ScreenModule, ["MarkingCanvas", new T.Vector2(16, 9),
-                new T.Vector3(0, 3, -8), new T.Vector3(0, 0, 0),
-                document.createElement("canvas"), 100]),
+                new T.Vector3(0, 3, -8), new T.Vector3(0, 0, 0), 2, 100
+                /*document.createElement("canvas"), 100*/]),
             new ModuleData(KafkaConsumerModule, [proxyHost, ["frame_detection"]])
         ])
 
@@ -35,41 +35,29 @@ export class PriorityDisplayFeature extends Feature {
     }
 
     protected connectFunction(): void {
-        this.turnLever      = this.modules[0].instance as TurnLever;
-        this.kafkaProducer  = this.modules[1].instance as KafkaProducerModule;
-        this.redisReceiver  = this.modules[2].instance as RedisReceiverModule;
-        this.displayCanvas  = this.modules[3].instance as ScreenModule;
-        this.kafkaConsumer  = this.modules[4].instance as KafkaConsumerModule;
+        this.turnLever = this.modules[0].instance as TurnLever;
+        this.kafkaProducer = this.modules[1].instance as KafkaProducerModule;
+        this.redisReceiver = this.modules[2].instance as RedisReceiverModule;
+        this.displayCanvas = this.modules[3].instance as ScreenModule;
+        this.kafkaConsumer = this.modules[4].instance as KafkaConsumerModule;
 
         this.turnLever.addEventListener(TurnLever.EVENT_LEVER_STATE_CHANGED, (event: TurnLeverEvent) => {
-            let kafkaMessage = {
-                type: "turn_lever_event",
-                data: {
-                    old_state: event.oldState,
-                    new_state: event.newState
-                }
-            }
-            this.kafkaProducer.produce('UI_messages', JSON.stringify(kafkaMessage),
-                (msg: Response) => {
-                    console.log(msg)
-                    if (!msg.ok) {
-                        this.turnLever.leverState = event.oldState;
-
-                        this.turnDir = event.newState == LeverState.Neutral ? TurnWarning.STRAIGHT
+                                this.turnDir = event.newState == LeverState.Neutral ? TurnWarning.STRAIGHT
                                     : event.newState == LeverState.Left ? TurnWarning.LEFT : TurnWarning.RIGHT
-                    }
-                },
-                (error) => {
-                    console.error(error)
-                })
         });
 
-        this.redisReceiver.addEventListener(RedisReceiverModule.REDIS_DATA_RECEIVED_EVENT, (event: RedisEvent) => {
-            // console.log("data received");
-        })
+        this.redisReceiver.addEventListener(RedisReceiverModule.REDIS_DATA_RECEIVED_EVENT, this.setScreenFrame)
 
-        document.body.appendChild(this.displayCanvas.canvas);
         this.kafkaConsumer.addEventListener(KafkaConsumerModule.MESSAGE_RECEIVED, this.drawDetections);
+        document.body.appendChild(this.displayCanvas.canvases[0]);
+        document.body.appendChild(this.displayCanvas.canvases[1]);
+    }
+
+    setScreenFrame = (event: RedisEvent) => {
+        if(event.width != this.displayCanvas.canvases[0].width || event.height != this.displayCanvas.canvases[0].height)
+            this.displayCanvas.resize(event.width / 100, event.height / 100)
+        this.displayCanvas.setImageFromBlob(0, event.data, event.width, event.height).then();
+
     }
 
     drawDetections = (event: KafkaMessageEvent) => {
@@ -82,18 +70,18 @@ export class PriorityDisplayFeature extends Feature {
         let classes = val['classes'];
         if (classes == undefined) return;
 
-        this.displayCanvas.clearStrokes();
+        this.displayCanvas.clearStrokes(1);
         for (const maskKey in mask) {
-            if((mask[maskKey] & this.turnDir) == 0) continue;
+            if ((mask[maskKey] & this.turnDir) == 0) continue;
 
             let marks = classes[maskKey];
-            if(marks == undefined) continue;
+            if (marks == undefined) continue;
 
             for (const mark of marks) {
-                this.displayCanvas.rectNorm(mark[0], mark[1], mark[2], mark[3], "red", 10)
+                this.displayCanvas.rectNorm(1, mark[0] - mark[2] / 2, mark[1] - mark[3] / 2, mark[2], mark[3], "red", 5)
             }
         }
-        this.displayCanvas.updateStrokes();
+        this.displayCanvas.updateStrokes(1);
     }
 }
 
@@ -107,7 +95,7 @@ enum TurnWarning {
 }
 
 enum TurnMode {
-    DEFAULT ,
+    DEFAULT,
     PRIORITY,
     PRIORITY_TO_LEFT,
     PRIORITY_TO_RIGHT,
