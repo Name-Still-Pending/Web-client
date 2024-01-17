@@ -7,6 +7,9 @@ import {LeverState, TurnLever, TurnLeverEvent} from "../turn_lever/TurnLever";
 import {ScreenModule} from "../common_modules/ScreenModule";
 
 export class PriorityDisplayFeature extends Feature {
+    set turnType(value: TurnMode) {
+        this._turnType = value;
+    }
 
     // modules
     turnLever: TurnLever;
@@ -16,7 +19,7 @@ export class PriorityDisplayFeature extends Feature {
     displayCanvas: ScreenModule;
 
     //private properties
-    private turnType: TurnMode;
+    private _turnType: TurnMode;
     private turnDir: TurnWarning;
 
     public constructor(proxyHost = 'localhost:5000') {
@@ -25,12 +28,12 @@ export class PriorityDisplayFeature extends Feature {
             new ModuleData(KafkaProducerModule, [proxyHost]),
             new ModuleData(RedisReceiverModule, [proxyHost]),
             new ModuleData(ScreenModule, ["MarkingCanvas", new T.Vector2(16, 9),
-                new T.Vector3(0, 3, -8), new T.Vector3(0, 0, 0), 2, 100
+                new T.Vector3(5, 2, -5), new T.Vector3(0, 0, 0), 2, 100
                 /*document.createElement("canvas"), 100*/]),
             new ModuleData(KafkaConsumerModule, [proxyHost, ["frame_detection"]])
         ])
 
-        this.turnType = TurnMode.YIELD;
+        this._turnType = TurnMode.YIELD;
         this.turnDir = TurnWarning.STRAIGHT;
     }
 
@@ -49,8 +52,8 @@ export class PriorityDisplayFeature extends Feature {
         this.redisReceiver.addEventListener(RedisReceiverModule.REDIS_DATA_RECEIVED_EVENT, this.setScreenFrame)
 
         this.kafkaConsumer.addEventListener(KafkaConsumerModule.MESSAGE_RECEIVED, this.drawDetections);
-        document.body.appendChild(this.displayCanvas.canvases[0]);
-        document.body.appendChild(this.displayCanvas.canvases[1]);
+        // document.body.appendChild(this.displayCanvas.canvases[0]);
+        // document.body.appendChild(this.displayCanvas.canvases[1]);
     }
 
     setScreenFrame = (event: RedisEvent) => {
@@ -66,7 +69,7 @@ export class PriorityDisplayFeature extends Feature {
 
         let val = typeof event.value === 'string' ? JSON.parse(event.value) : event.value;
 
-        let mask = turn_masks[this.turnType];
+        let mask = turn_masks[this._turnType];
         let classes = val['classes'];
         if (classes == undefined) return;
 
@@ -83,6 +86,24 @@ export class PriorityDisplayFeature extends Feature {
         }
         this.displayCanvas.updateStrokes(1);
     }
+
+    getUIElement(){
+        let select = document.createElement("select");
+        select.onchange = (ev: Event) => {
+            console.log("Turn mode changed");
+            this._turnType = TurnMode[(ev.target as HTMLSelectElement).value];
+        }
+        for (const turnModeElement in TurnMode) {
+            if(!isNaN(Number(turnModeElement))) {
+                let opt = document.createElement("option")
+                opt.value = turnModeElement;
+                opt.innerText = TurnMode[turnModeElement];
+                select.add(opt);
+            }
+        }
+
+        return select;
+    }
 }
 
 enum TurnWarning {
@@ -94,7 +115,7 @@ enum TurnWarning {
     ALL = LEFT | STRAIGHT | RIGHT,
 }
 
-enum TurnMode {
+export enum TurnMode {
     DEFAULT,
     PRIORITY,
     PRIORITY_TO_LEFT,

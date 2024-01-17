@@ -93,7 +93,7 @@
     <script src="./src/frontend/indexFunctions.ts"></script>
 </head>
 <body style="height: 100%; margin: 0; background-color: cyan">
-    <div class="navbar">
+    <div id="nav" class="navbar">
         <div class="dropdown">
             <button class="dropbtn">Functionality
             </button>
@@ -119,12 +119,15 @@
         import {DisplayManager} from "./src/frontend/DisplayManager";
         import {CarLoad} from "./src/frontend/CarLoad";
 
-        import {PriorityDisplayFeature} from "./src/frontend/features/PriorityDisplayFeature";
+        import {PriorityDisplayFeature, TurnMode} from "./src/frontend/features/PriorityDisplayFeature";
 
         let display = new DisplayManager('OpenGlDisplay');
 
         display.addModule(new CarLoad());
-        display.addFeature(new PriorityDisplayFeature());
+        let p = new PriorityDisplayFeature();
+        display.addFeature(p);
+
+        document.getElementById("nav").appendChild(p.getUIElement())
 
         // test code, should be implemented with Environment class
 

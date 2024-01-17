@@ -30,9 +30,9 @@ export class ScreenModule extends BaseModule {
     }
 
     public resize(newWidth: number, newHeight: number){
-        let geo = this.object.geometry as T.PlaneGeometry
-        let scale = new T.Vector2(newWidth / this.size.width, newHeight / this.size.height);
-        geo.scale(scale.x, scale.y, 1)
+        // let geo = this.object.geometry as T.PlaneGeometry
+        // let scale = new T.Vector2(newWidth / this.size.width, newHeight / this.size.height);
+        // geo.scale(scale.x, scale.y, 1)
 
         for (let canvas of this.canvases) {
             canvas.width = newWidth * this.pixelScale;
