@@ -10,20 +10,24 @@ export class CarLoad extends Environment{
         super("CarLoad");
 
         this.meshList = [{
-            path: "./res/Caravan.obj",
+            // model by KrStolorz (Krzysztof Stolorz) on https://shetchfab.com
+            path: "./res/Golf/Volkswagen Golf.obj",
             pos: new T.Vector3(0, -1.5, 0),
             rot: new T.Vector3(0, Math.PI, 0),
         },
-        {
+       /* {
             path: "./res/Painel.obj",
             pos: new T.Vector3(0, -0.9, -0.9),
             rot: new T.Vector3(0, 0, 0),
-        }];
+        }*/];
     }
 
-    // init(display: DisplayManager) {
-    //     super.init(display);
-    //
-    //     // this._leverMesh = this.objects[0].children[0] as T.Mesh;
-    // }
+    init(display: DisplayManager) {
+        super.init(display);
+
+        let light = new T.PointLight(0xffffff, 0.6)
+        light.position.set(0.1, -0.2, 0)
+        light.castShadow = true;
+        display.scene.add(light);
+    }
 }

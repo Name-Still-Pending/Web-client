@@ -1,0 +1,70 @@
+# Blender 4.0.2 MTL File: 'Volkswagen Golf Mk1 (LP).blend'
+# www.blender.org
+
+newmtl Body
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Body_BaseColor.png
+map_Ns textures/Body_Roughness.png
+map_refl textures/Body_Metallic.png
+map_Bump -bm 1.000000 textures/Body_Normal.png
+
+newmtl Interior
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Interior_BaseColor.png
+map_Ns textures/Interior_Roughness.png
+map_refl textures/Interior_Metallic.png
+map_Bump -bm 1.000000 textures/Interior_Normal.png
+
+newmtl Lights
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Body_BaseColor.png
+map_Ke textures/Body_BaseColor.png
+
+newmtl Paint
+Ns 960.400024
+Ka 1.000000 1.000000 1.000000
+Kd 0.799103 0.234550 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -bm 1.000000 textures/Body_Normal.png
+
+newmtl Plate
+Ns 640.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.100000 0.100000 0.100000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Plate diff.png
+map_Bump -bm 1.000000 textures/Plate_Normal.png
+
+newmtl Wheel
+Ka 1.000000 1.000000 1.000000
+Ks 0.200000 0.200000 0.200000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd textures/Wheel_BaseColor.png
+map_Ns textures/Wheel_Roughness.png
+map_refl textures/Wheel_Metallic.png
+map_Bump -bm 1.000000 textures/Wheel_Normal.png

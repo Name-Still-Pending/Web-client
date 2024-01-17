@@ -81,7 +81,7 @@ export class DisplayManager{
         }
         else {
             if (this.inside === false) {
-                this.controls.target.set( -0.45, 0, 0.30 );
+                this.controls.target.set( -0.3, -0.3, 0 );
                 this.inside = true;
             }
             this.controls.minDistance = 0.0001;
