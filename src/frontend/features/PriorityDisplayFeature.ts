@@ -91,7 +91,7 @@ export class PriorityDisplayFeature extends Feature {
         let select = document.createElement("select");
         select.onchange = (ev: Event) => {
             console.log("Turn mode changed");
-            this._turnType = TurnMode[(ev.target as HTMLSelectElement).value];
+            this._turnType = Number((ev.target as HTMLSelectElement).value);
         }
         for (const turnModeElement in TurnMode) {
             if(!isNaN(Number(turnModeElement))) {
